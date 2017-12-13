@@ -5,18 +5,39 @@ namespace application\core;
 use InvalidArgumentException;
 use PDO;
 
+/**
+ * Singleton Class Application
+ * @package application\core
+ */
 class Application {
 
-    private static $db;
+    private static $instance = null;
+
+    private $db;
+
+    private $homeUrl;
 
     /**
-     * При создании экземпляра приложения оно сразу конфигурируется
-     * @param array $config - конфигурация
+     * Приватный конструктор
      */
-    public function __construct($config = []) {
-        if (!empty($config)) {
-            $this->configure($config);
+    private function __construct() {
+    }
+
+    /**
+     * Ограничивает клонирование объекта
+     */
+    protected function __clone() {
+    }
+
+    /**
+     * Возвращает единственный экземпляр Application
+     * @return Application
+     */
+    public static function getInstance() {
+        if (is_null(self::$instance)) {
+            self::$instance = new self();
         }
+        return self::$instance;
     }
 
     /**
@@ -30,8 +51,8 @@ class Application {
      * Возвращает подключение к Базе данных
      * @return PDO
      */
-    public static function getDb() {
-        return static::$db;
+    public function getDb() {
+        return $this->db;
     }
 
 
@@ -39,9 +60,14 @@ class Application {
      * Конфигурация экземпляра приложения
      * @param array $config - конфигурация
      */
-    public function configure($config) {
-        if (isset($config['db'])) {
-            $this->registerConnection($config['db']);
+    public function configure($config = []) {
+        if (!empty($config)) {
+            if (isset($config['db'])) {
+                $this->registerConnection($config['db']);
+            }
+            if (isset($config['homeUrl'])) {
+                $this->setHomeUrl($config['homeUrl']);
+            }
         }
     }
 
@@ -67,6 +93,25 @@ class Application {
         if (!empty($db['attributes'])) {
             $attributes = $db['attributes'];
         }
-        static::$db = (new Connection($dsn, $username, $password, $attributes))->getConnection();
+        $this->db = (new Connection($dsn, $username, $password, $attributes))->getConnection();
+    }
+
+    /**
+     * Возвращает путь к домашней странице, по умолчанию равен '/'
+     * @return string домашняя страница приложения
+     */
+    public function getHomeUrl() {
+        if ($this->homeUrl === null) {
+            $this->homeUrl = '/';
+        }
+        return $this->homeUrl;
+    }
+
+    /**
+     * Устанавливает путь к домашней странице приложения
+     * @param string $value
+     */
+    public function setHomeUrl($value) {
+        $this->homeUrl = $value;
     }
 }
