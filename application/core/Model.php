@@ -20,7 +20,7 @@ abstract class Model {
      * @return \PDO
      */
     public static function getDb() {
-        return Application::getDb();
+        return Application::getInstance()->getDb();
     }
 
     public function findAll() {
